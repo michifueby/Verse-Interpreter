@@ -14,7 +14,7 @@
 <br />
 
 <div align="center">
-  <a href="https://github.com/github_username/repo_name">
+  <a href="https://github.com/michifueby/Verse-Interpreter">
     <img src="images/logo.png" alt="Logo" width="80" height="80">
   </a>
 <h3 align="center">Versify (Verse-Interpreter)</h3>
@@ -23,14 +23,14 @@
   <p align="center">
     A simple Interpreter for the programming language Verse.
     <br />
-    <a href="https://github.com/github_username/repo_name"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/michifueby/Verse-Interpreter"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/github_username/repo_name">View Demo</a>
+    <a href="https://github.com/michifueby/Verse-Interpreter">View Demo</a>
     ·
-    <a href="https://github.com/github_username/repo_name/issues">Report Bug</a>
+    <a href="https://github.com/michifueby/Verse-Interpreter/issues">Report Bug</a>
     ·
-    <a href="https://github.com/github_username/repo_name/issues">Request Feature</a>
+    <a href="https://github.com/michifueby/Verse-Interpreter/issues">Request Feature</a>
   </p>
 
 </div>
