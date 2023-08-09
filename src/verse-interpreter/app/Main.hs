@@ -6,19 +6,31 @@
 module Main (main) where
     
 import System.IO ()
+import System.Environment (getArgs)
 
 import qualified Data.Map as Map  
+import Util.Datatypes.Types as T
+import Util.Interface.ResultValue as R
 
 import Util.InputOutput.InputHandler 
-import Util.Lexical.Lexer 
-import Util.Parse.Parser
+import Util.Scanning.Lexer 
 import Util.Evaluate.Evaluator 
 import Util.Evaluate.EvaluatorAdditionals
-
--- import Util.Datatypes.Types as T
-import Util.Interface.AbstractSyntaxTree as Ast
-import Util.Interface.ResultValue as R
+import Util.Evaluate.Environment
+import Util.Evaluate.EnvironmentAdditionals
+import Util.Parsing.Grammars.Grammar
+import Util.Parsing.Grammars.GrammarAll
+import Util.InputOutput.OutputHandler
+import Util.Interface.AbstractSyntaxTree
+import Util.Core.CoreFunctions
+import Util.CommandLineArguments.CommandLineArgumentsParser
         
+
+{- 
+    --------------------------------
+    |          Executable          |
+    --------------------------------
+-}
 
 {-
     Represents the entry point of the application.
@@ -27,57 +39,105 @@ main :: IO ()
 main = do 
     {- 
         --------------------------------
-        |          Executable          |
+        |          Ascii Header        |
         --------------------------------
     -}
-    collection <- getContent "../samples/math.verse" 
 
-    print (lexer collection)
+    printAsciiHeader
 
-    let env = Env {variables = Map.empty, functions = Map.empty}
-    let ast = parse (filterUnusedRows (toRowNumber (lexer collection))) 
-
-    --print(parse (filterUnusedRows (toRowNumber (lexer collection))) )
-
-    print (foldl (evaluate . getEnvironment ) (env, R.Nothing) ast)
-
-     {- 
+    {- 
         --------------------------------
-        |          Examples            |
+        |  Get Command Line Arguments  |
         --------------------------------
     -}
+
+    args <- getArgs
+
+    {- 
+        --------------------------------
+        |Process Command Line Arguments|
+        --------------------------------
+    -}
+        
+    case parseArgs args of
+        argList -> do
+            -- Represents the full file path from command line arguments
+            let filePath = extractFilePathFromCommandAction $ extractRightCommandAction $ processCommand $ extractFilePath argList
+            -- Represents the state of the debug mode from command line arguments
+            let isDebugModeOn = extractDebugModeStateFromCommandAction $ extractRightCommandAction $ processCommand $ extractDebugMode argList
+            -- Represents the state of the user defined functions from command line arguments
+            let isWithUserDefinedFunctionsOn = extractUserDefinedFunctionsStateFromCommandAction $ extractRightCommandAction $ processCommand $ extractUserDefinedFunctions argList
+            
+            let isWithAllOutput = extractWithAllOutputStateFromCommandAction $ extractRightCommandAction $ processCommand $ extractWithAllOutput argList
+
+            putStrLn $ "Interpret the file " ++ "\"" ++ filePath ++ "\"" ++ "\n\n" ++ "   > Debug Mode: " ++ show isDebugModeOn ++ "\n" ++ "   > With User Defined Functions: " ++ show isWithUserDefinedFunctionsOn ++ "\n" ++ "   > With All Output: " ++ show isWithAllOutput ++ "\n"
+            
+            {- 
+                --------------------------------
+                |        Get file content      |
+                --------------------------------
+            -}
+            
+            collection <- getContent filePath
+
+            {- 
+                --------------------------------
+                |      Interpreter Execution   |
+                --------------------------------
+            -}
+
+            case collection of
+                [] -> putStrLn "Empty file! \n"
+                fileContent -> do
+                    let env = case isWithUserDefinedFunctionsOn of
+                            True -> getUserDefinedFunctions
+                            False -> createEmptyEnvironment
+
+                    let ast = do
+                            case isWithAllOutput of
+                                True -> parseExpAll $ lexer fileContent
+                                False -> parseExp $ lexer fileContent
+
+                    case isDebugModeOn of
+                        True -> print $ evaluate env ast
+                        False -> printResult $ getResult $ evaluate env ast
+
     
-    -- Strings with Concat ++ operator     -- =====Add for LP4 Logic Programmin Michael Füby
-    print (evaluate env (Ast.ConcatString (StringLit "hallo") (StringLit "Welt"))) 
+            -- if not isDebugModeOn then printResult $  getResult $ evaluate (setEnviroment isWithUserDefinedFunctionsOn) $ parseExp $ lexer fileContent else print $ evaluate (setEnviroment isWithUserDefinedFunctionsOn) $ parseExp $ lexer fileContent
+            --print (foldl (evaluate . getEnvironment ) (env, R.Nothing) ast)
+            --print (scanl (evaluate . getEnvironment ) (env, R.Nothing) ast)
 
-    -- Strings with <   -- =====Add for LP4 Logic Programmin Michael Füby
-    print (evaluate env (Ast.Lt (StringLit "hallo") (StringLit "Welt"))) 
+        [Prelude.Nothing] -> putStrLn "Invalid command. Use -h or --help for usage instructions. \n"
 
-    -- Strings with >    -- =====Add for LP4 Logic Programmin Michael Füby
-    print (evaluate env (Ast.Gt (StringLit "hallo") (StringLit "Welt"))) 
+{-
+    Prints the ASCII program header.
+-}
+printAsciiHeader :: IO ()
+printAsciiHeader = do
+    putStrLn "                     _  __       "
+    putStrLn " __   _____ _ __ ___(_)/ _|_   _ "
+    putStrLn " \\ \\ / / _ \\ '__/ __| | |_| | | |"
+    putStrLn "  \\ V /  __/ |  \\__ \\ |  _| |_| |"
+    putStrLn "   \\_/ \\___|_|  |___/_|_|  \\__, |"
+    putStrLn "                           |___/ "
+    putStrLn "  _                                   "
+    putStrLn " | |__  _   _                         "
+    putStrLn " | '_ \\| | | |                        "
+    putStrLn " | |_) | |_| |                        "
+    putStrLn " |_.__/ \\__, |                        "
+    putStrLn "  __  __|___/_    ___         _ _____ "
+    putStrLn " |  \\/  |  ___|  ( _ )       | |_   _|"
+    putStrLn " | |\\/| | |_     / _ \\/\\  _  | | | |  "
+    putStrLn " | |  | |  _|   | (_>  < | |_| | | |  "
+    putStrLn " |_|  |_|_|      \\___/\\/  \\___/  |_|  "
+    putStrLn ""
 
-    -- Strings with >    -- =====Add for LP4 Logic Programmin Michael Füby
-    print (evaluate env (Ast.Eq (StringLit "hallo") (StringLit "Welt"))) 
-
-    -- Strings with ==    -- =====Add for LP4 Logic Programmin Michael Füby
-    print (evaluate env (Ast.Eq (StringLit "hallo") (StringLit "hallo"))) 
-
-    -- Strings with ==   -- =====Add for LP4 Logic Programmin Michael Füby
-    print (evaluate env (Ast.Eq (StringLit "hallo") (StringLit "welt"))) 
-
-    --Beispiel befindet sich auch im math.verse zum ausführen
-    -- data Rectangle = Rectangle {width : int, height : int}
-
-    -- Alles kann mit stack exec verse-interpreter-exe ausgeführt werden
-
-
-
-
-
-
-
-
-
+{-
+    Sets the enviroment for the evaluator.
+-}
+-- setEnviroment :: Bool -> Env
+-- setEnviroment state = if state then getUserDefinedFunctions else createEmptyEnvironment
+ 
     {- 
         ---------------------------------------------------
         |          Evaluator Testing Environment          |
@@ -469,5 +529,8 @@ main = do
     -- >>>>>     functions = Map.empty
     -- >>>>> }
     -- >>>>> print (foldl (evaluate . getEnvironment) (environment, R.Int 0) [Unify (Ast.Var "x") (Ast.Tuple [IntLit 2, Declaration "y" T.Int]), Unify (Ast.Var "x") (Ast.Tuple [Declaration "z" T.Int, IntLit 3])])
+
+
+
 
 

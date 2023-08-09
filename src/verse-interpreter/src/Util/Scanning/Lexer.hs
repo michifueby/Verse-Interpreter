@@ -3,7 +3,7 @@
     File:       Lexer.hs
 -}
 
-module Util.Lexical.Lexer
+module Util.Scanning.Lexer
      ( NumType, Name, Token(..), lexString, lexer, getTokenName, 
      getTokenNumber, toRowNumber, filterUnusedRows
     ) where
@@ -11,9 +11,15 @@ module Util.Lexical.Lexer
 import Data.Char ( isSpace, isDigit )
 import Util.Datatypes.IntegerValue ( NumType, toNumType )
 import Util.Shared (Name)
-import Util.Lexical.LexerAdditionals
-import Util.Interface.Token
+import Util.Interface.Token.Token
+import Util.Interface.Token.ExtendedToken
 
+
+{- 
+    -------------------------------------------
+    |               Main Lexer                |                
+    -------------------------------------------
+-}
 
 {-
     Takes a string and returns the corresponding list
@@ -36,36 +42,33 @@ lexString xs@(x:xs')
     | x == '{'   = TokenLeft Curly : lexString xs'
     | x == '['   = TokenLeft Squared : lexString xs'
     | x == ']'   = TokenRight Squared : lexString xs'
-    | x == '+' && xs' /= [] && head xs' == '+' = TokenPrimitives "++" : lexString (drop 1 xs')   -- =====Add for LP4 Logic Programmin Michael Füby
     | x == '+'   = TokenPrimitives (charToString x) : lexString xs'
     | x == '>'   = TokenPrimitives (charToString x) : lexString xs'
     | x == '<'   = TokenPrimitives (charToString x) : lexString xs'
     | x == ','   = TokenPrimitives (charToString x) : lexString xs'
     | x == '|'   = TokenPrimitives (charToString x) : lexString xs'
+    | x == '-' && xs' /= [] && head xs' == '-' = lexString (drop 1 (dropWhile (/= '\n') xs'))
     | x == '-'   = TokenPrimitives (charToString x) : lexString xs'
     | x == '*'   = TokenPrimitives (charToString x) : lexString xs'
     | x == '.' && xs' /= [] && head xs' == '.' = TokenPrimitives ".." : lexString (drop 1 xs')
-    | x == '.' = error ("Invalid token " ++ "\"" ++ charToString x ++ "\"")
-    | x == '"' = processString xs' -- =====Add for LP4 Logic Programmin Michael Füby
+    | x == '.'   = TokenPrimitives (charToString x) : lexString xs'
+    | x == '"'   = let (str, rest) = span (/= '"') xs'
+                    in if null rest || head rest /= '"'
+                          then error $ "Missing double quote (\") in string " ++ show str ++ "!"
+                        else TokenString str : lexString (drop 1 rest)
     | isDigit x   = let (num,rest) = span isDigit xs
                     in TokenNumber (convertNumType num) : lexString rest
     | otherwise  = let isNameChar c =
                             not (isSpace c || elem c nonNameChars)
                        (name,rest) = span isNameChar xs
                    in  TokenName name : lexString rest
--- =====Add for LP4 Logic Programmin Michael Füby
-processString :: String -> [Token]
-processString = buildString
--- =====Add for LP4 Logic Programmin Michael Füby
-buildString :: [Char] -> [Token]
-buildString ('\"' : ts) = lexString ts
-buildString (t:ts) = TokenString t : buildString ts
- 
+
+
 {-
     Characters that cannot appear in names: ( ) ; : .....
 -}
 nonNameChars :: [Char]
-nonNameChars = ['(', ')', ';', ':', '{', '}', '=', '[', ']', '+', '-', '*', '<', '>', ',', '.', '|']
+nonNameChars = ['(', ')', ';', ':', '{', '}', '=', '[', ']', '+', '-', '*', '<', '>', ',', '.', '|', '"']
 
 {-
     Gets the next list element.
@@ -123,11 +126,10 @@ processToken t           = t
 
 {-
     Represents the keywords and primitives in a list.
-    Name Type from Datatypes.IntegerValue ( NumType, Name, toNumType )
 -}
-keywords, primitives :: [Name]           -- =====Add for LP4 Logic Programmin Michael Füby
-keywords     = ["if", "then", "else", "int", "false?", "for", "do", "array", "tuple", "data"]
-primitives   = ["+","-","*","=","<",">", "|", "..", ",", "?", ":", ".", "=>"]
+keywords, primitives :: [Name]
+keywords     = ["if", "then", "else", "int", "false?", "for", "do", "array", "tuple", "data", "string", "new", "any", "func"]
+primitives   = ["+","-","*","=","<",">", "|", "..", ",", "?", ":", ".", "=>", "\""]
 
 {-
     Build token list to extended token with row number.
@@ -147,11 +149,3 @@ toRowNumber tokens = merge 1 tokens []
 -}
 filterUnusedRows :: [ExtendedToken] -> [ExtendedToken]
 filterUnusedRows = filter (not . null . getTokens)
-  
-sameTokenNextToEachOther :: [Token] -> Bool
-sameTokenNextToEachOther [] = False
-sameTokenNextToEachOther [_] = False
-sameTokenNextToEachOther (TokenNumber _ : TokenNumber _ : _ ) = True
-sameTokenNextToEachOther (TokenPrimitives _ : TokenPrimitives _ : _ ) = True
-sameTokenNextToEachOther (_ : rest) = sameTokenNextToEachOther rest
-

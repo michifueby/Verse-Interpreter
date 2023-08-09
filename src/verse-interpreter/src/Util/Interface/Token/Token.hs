@@ -3,12 +3,17 @@
     File:       Token.hs
 -}
 
-module Util.Interface.Token where
+module Util.Interface.Token.Token where
 
 import Util.Datatypes.IntegerValue (NumType)
 import Util.Shared
-import Util.Datatypes.StringValue (StringType)
 
+
+{- 
+    -------------------------------------------
+    |               Token Type                |                
+    -------------------------------------------
+-}
 
 {- 
     Declare Token type.
@@ -18,7 +23,7 @@ data Token = TokenLeft BracketType     -- left parenthesis
     | TokenSemicolon                   -- ;
     | TokenNewLine                     -- \n
     | TokenNumber NumType              -- unsigned integer literal
-    | TokenString StringType           
+    | TokenString String               -- Strings
     | TokenName Name                   -- names of variables, etc.
     | TokenPrimitives Name             -- names of primitive functions
     | TokenKey Name                    -- keywords

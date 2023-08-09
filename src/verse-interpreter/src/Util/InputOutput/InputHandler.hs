@@ -9,6 +9,13 @@ module Util.InputOutput.InputHandler
 
 import System.IO 
 
+
+{- 
+    -------------------------------------------
+    |              Input Handler              |                
+    -------------------------------------------
+-}
+
 {-
     Get content from the file.
 -}

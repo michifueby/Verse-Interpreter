@@ -11,6 +11,13 @@ where
 -- https://hackage.haskell.org/package/base-4.18.0.0/docs/GHC-TypeLits.html
 import qualified GHC.TypeLits as Right
 
+
+{- 
+    -------------------------------------------
+    |                 Int Type                |
+    -------------------------------------------
+-}
+
 {-
     Define the integer type.
 -}

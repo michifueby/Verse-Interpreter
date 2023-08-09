@@ -1,14 +1,16 @@
-{-
-    Project:    Verse-Interpreter
-    File:       LexerAdditionals.hs
--}
 
-module Util.Lexical.LexerAdditionals where
+module Util.Interface.Token.ExtendedToken where
 
-import Util.Interface.Token
+import Util.Interface.Token.Token
 import Util.Datatypes.IntegerValue
 import Util.Shared
 
+
+{- 
+    -------------------------------------------
+    |             Lexer Additionals           |                
+    -------------------------------------------
+-}
 
 {-
     Represents the RowNumber type.
@@ -31,4 +33,3 @@ getRowNumber = fst
 -}
 getTokens :: ExtendedToken -> [Token]
 getTokens = snd
-
