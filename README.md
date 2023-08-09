@@ -10,7 +10,7 @@
 
 <div align="center">
   <a href="https://github.com/michifueby/Verse-Interpreter">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <!-- <img src="images/logo.png" alt="Logo" width="80" height="80"> -->
   </a>
 <h3 align="center">Versify (Verse-Interpreter)</h3>
 
