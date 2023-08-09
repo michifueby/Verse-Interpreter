@@ -1,0 +1,1 @@
+data Rectangle = Rectangle {width : int, height : int}
